@@ -2,7 +2,10 @@ import bcrypt from "bcryptjs";
 
 import User from "../../models/User.js";
 
-import generateToken from "../../utils/generateToken.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../../utils/generateToken.js";
 
 // 🔐 LOGIN CONTROLLER
 const loginController = async (

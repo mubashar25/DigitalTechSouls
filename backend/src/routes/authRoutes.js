@@ -11,11 +11,11 @@ import meController from "../controllers/auth/meController.js";
 
 import forgotPasswordController from "../controllers/auth/forgotPasswordController.js";
 
-import resetPasswordController from "../controllers/auth/resetPasswordController.js";
+
 
 import refreshTokenController from "../controllers/auth/refreshTokenController.js";
 
-import verifyEmailController from "../controllers/auth/verifyEmailController.js";
+
 
 // 🔥 MIDDLEWARE
 import authMiddleware from "../middleware/authMiddleware.js";
@@ -61,11 +61,7 @@ router.post(
   forgotPasswordController
 );
 
-// ✅ RESET PASSWORD
-router.post(
-  "/reset-password/:token",
-  resetPasswordController
-);
+
 
 // ==========================================
 // 🔄 TOKEN ROUTES
@@ -81,10 +77,6 @@ router.post(
 // 📧 EMAIL VERIFICATION
 // ==========================================
 
-// ✅ VERIFY EMAIL
-router.get(
-  "/verify-email/:token",
-  verifyEmailController
-);
+
 
 export default router;
