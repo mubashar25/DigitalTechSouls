@@ -179,15 +179,18 @@ export default function Login() {
                 placeholder="Enter email"
                 required
                 className="
-                w-full
-                border
-                rounded-lg
-                px-4
-                py-3
-                focus:outline-none
-                focus:ring-2
-                focus:ring-black
-              "
+w-full
+border
+rounded-lg
+px-4
+py-3
+text-gray-900
+bg-white
+placeholder-gray-400
+focus:outline-none
+focus:ring-2
+focus:ring-black
+"
               />
 
             </div>
@@ -214,15 +217,18 @@ export default function Login() {
                 placeholder="Enter password"
                 required
                 className="
-                w-full
-                border
-                rounded-lg
-                px-4
-                py-3
-                focus:outline-none
-                focus:ring-2
-                focus:ring-black
-              "
+w-full
+border
+rounded-lg
+px-4
+py-3
+text-gray-900
+bg-white
+placeholder-gray-400
+focus:outline-none
+focus:ring-2
+focus:ring-black
+"
               />
 
             </div>

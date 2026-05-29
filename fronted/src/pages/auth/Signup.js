@@ -265,15 +265,18 @@ export default function Signup() {
                 placeholder="Enter full name"
                 required
                 className="
-                w-full
-                border
-                rounded-lg
-                px-4
-                py-3
-                focus:outline-none
-                focus:ring-2
-                focus:ring-black
-              "
+w-full
+border
+rounded-lg
+px-4
+py-3
+text-gray-900
+bg-white
+placeholder-gray-400
+focus:outline-none
+focus:ring-2
+focus:ring-black
+"
               />
 
             </div>
@@ -300,15 +303,18 @@ export default function Signup() {
                 placeholder="Enter email"
                 required
                 className="
-                w-full
-                border
-                rounded-lg
-                px-4
-                py-3
-                focus:outline-none
-                focus:ring-2
-                focus:ring-black
-              "
+w-full
+border
+rounded-lg
+px-4
+py-3
+text-gray-900
+bg-white
+placeholder-gray-400
+focus:outline-none
+focus:ring-2
+focus:ring-black
+"
               />
 
             </div>
@@ -335,15 +341,18 @@ export default function Signup() {
                 placeholder="Create password"
                 required
                 className="
-                w-full
-                border
-                rounded-lg
-                px-4
-                py-3
-                focus:outline-none
-                focus:ring-2
-                focus:ring-black
-              "
+w-full
+border
+rounded-lg
+px-4
+py-3
+text-gray-900
+bg-white
+placeholder-gray-400
+focus:outline-none
+focus:ring-2
+focus:ring-black
+"
               />
 
             </div>
@@ -370,15 +379,18 @@ export default function Signup() {
                 placeholder="Confirm password"
                 required
                 className="
-                w-full
-                border
-                rounded-lg
-                px-4
-                py-3
-                focus:outline-none
-                focus:ring-2
-                focus:ring-black
-              "
+w-full
+border
+rounded-lg
+px-4
+py-3
+text-gray-900
+bg-white
+placeholder-gray-400
+focus:outline-none
+focus:ring-2
+focus:ring-black
+"
               />
 
             </div>
