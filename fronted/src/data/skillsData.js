@@ -1,0 +1,1 @@
+export default ["HTML", "CSS", "JavaScript", "React", "Tailwind"];
