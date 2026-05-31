@@ -36,8 +36,10 @@ export default function useDomain() {
 
         // ❌ EMPTY
         if (!trimmed) {
+
           setResults([]);
           setQuery("");
+
           return;
         }
 
@@ -58,7 +60,9 @@ export default function useDomain() {
 
         try {
 
+          // ========================================
           // 🔥 API CALL
+          // ========================================
           const res =
             await searchDomainAPI(
               trimmed,
@@ -68,10 +72,16 @@ export default function useDomain() {
               }
             );
 
-          // ✅ SAFE DATA
+          console.log(
+            "DOMAIN RESPONSE:",
+            res
+          );
+
+          // ========================================
+          // ✅ FIXED RESULTS
+          // ========================================
           setResults(
-            res?.data?.domains ||
-              []
+            res?.domains || []
           );
 
         } catch (err) {
@@ -88,7 +98,7 @@ export default function useDomain() {
             );
 
             setError(
-              err.message ||
+              err?.message ||
                 "Failed to search domain"
             );
 
@@ -108,9 +118,11 @@ export default function useDomain() {
   // ========================================
   const clearResults =
     useCallback(() => {
+
       setResults([]);
       setQuery("");
       setError("");
+
     }, []);
 
   return {

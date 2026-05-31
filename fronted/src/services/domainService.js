@@ -4,20 +4,30 @@ import api from "./api";
 // 🌐 SEARCH DOMAIN
 // ========================================
 export const searchDomainAPI =
-  async (query) => {
+  async (
+    query,
+    config = {}
+  ) => {
+
     try {
 
       const response =
         await api.get(
-          `/domains/check?domain=${query}`
+          `/domains/check?domain=${query}`,
+          config
         );
 
       return response.data;
 
     } catch (error) {
 
+      console.error(
+        "Search Domain Error:",
+        error
+      );
+
       throw (
-        error || {
+        error?.response?.data || {
           message:
             "Failed to search domain",
         }
@@ -30,6 +40,7 @@ export const searchDomainAPI =
 // ========================================
 export const getMyDomainsAPI =
   async () => {
+
     try {
 
       const response =
@@ -42,7 +53,7 @@ export const getMyDomainsAPI =
     } catch (error) {
 
       throw (
-        error || {
+        error?.response?.data || {
           message:
             "Failed to fetch domains",
         }
@@ -55,6 +66,7 @@ export const getMyDomainsAPI =
 // ========================================
 export const registerDomainAPI =
   async (domainData) => {
+
     try {
 
       const response =
@@ -68,7 +80,7 @@ export const registerDomainAPI =
     } catch (error) {
 
       throw (
-        error || {
+        error?.response?.data || {
           message:
             "Failed to register domain",
         }
@@ -81,6 +93,7 @@ export const registerDomainAPI =
 // ========================================
 export const transferDomainAPI =
   async (domainData) => {
+
     try {
 
       const response =
@@ -94,7 +107,7 @@ export const transferDomainAPI =
     } catch (error) {
 
       throw (
-        error || {
+        error?.response?.data || {
           message:
             "Failed to transfer domain",
         }

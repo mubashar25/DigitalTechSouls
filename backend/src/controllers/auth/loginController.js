@@ -1,5 +1,4 @@
 import bcrypt from "bcryptjs";
-
 import User from "../../models/User.js";
 
 import {
@@ -8,10 +7,7 @@ import {
 } from "../../utils/generateToken.js";
 
 // 🔐 LOGIN CONTROLLER
-const loginController = async (
-  req,
-  res
-) => {
+const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -19,17 +15,13 @@ const loginController = async (
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message:
-          "Email and password are required",
+        message: "Email and password are required",
       });
     }
 
-    // ✅ FIND USER
-    const user = await User.findOne({
-      email: email.toLowerCase(),
-    });
+    // ✅ FIND USER (IMPORTANT: include password)
+    const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
 
-    // ❌ USER NOT FOUND
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -41,19 +33,13 @@ const loginController = async (
     if (user.isBlocked) {
       return res.status(403).json({
         success: false,
-        message:
-          "Your account has been blocked",
+        message: "Your account has been blocked",
       });
     }
 
     // ✅ CHECK PASSWORD
-    const isMatch =
-      await bcrypt.compare(
-        password,
-        user.password
-      );
+    const isMatch = await bcrypt.compare(password, user.password);
 
-    // ❌ INVALID PASSWORD
     if (!isMatch) {
       return res.status(401).json({
         success: false,
@@ -61,38 +47,35 @@ const loginController = async (
       });
     }
 
-    // ✅ GENERATE JWT TOKEN
-    const token = generateToken(
-      user._id
-    );
+    // ✅ TOKENS (FIXED)
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    // (optional) save refresh token if you use it
+    user.refreshToken = refreshToken;
+    await user.save();
 
     // ✅ RESPONSE
     return res.status(200).json({
       success: true,
-
-      message:
-        "Login successful",
-
-      token,
-
+      message: "Login successful",
+      accessToken,
+      refreshToken,
       user: {
         id: user._id,
-        name: user.name,
+        name: user.fullName, // IMPORTANT FIX (not user.name)
         email: user.email,
         role: user.role,
         avatar: user.avatar,
       },
     });
+
   } catch (error) {
-    console.error(
-      "Login Error:",
-      error.message
-    );
+    console.error("Login Error:", error.message);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Server error during login",
+      message: "Server error during login",
     });
   }
 };

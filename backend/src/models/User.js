@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      default: "User",
     },
 
     email: {
@@ -14,6 +15,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
+      trim: true,
     },
 
     password: {
@@ -38,9 +40,10 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    // 🔥 FIX: added "investor" (from your DB error)
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "admin", "investor"],
       default: "user",
     },
 
@@ -59,7 +62,6 @@ const userSchema = new mongoose.Schema(
         type: Boolean,
         default: true,
       },
-
       darkMode: {
         type: Boolean,
         default: false,
@@ -71,30 +73,22 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+//
 // 🔐 HASH PASSWORD
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    next();
-  }
+//
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
 
-  this.password = await bcrypt.hash(
-    this.password,
-    10
-  );
+  this.password = await bcrypt.hash(this.password, 10);
 });
 
+//
 // 🔐 MATCH PASSWORD
-userSchema.methods.matchPassword =
-  async function (enteredPassword) {
-    return await bcrypt.compare(
-      enteredPassword,
-      this.password
-    );
-  };
+//
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
-const User = mongoose.model(
-  "User",
-  userSchema
-);
+const User = mongoose.model("User", userSchema);
 
 export default User;
