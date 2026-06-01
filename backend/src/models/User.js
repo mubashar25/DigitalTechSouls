@@ -5,23 +5,32 @@ const userSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
-      required: true,
+      required: [true, "Full name is required"],
       trim: true,
-      default: "User",
+      minlength: [2, "Name must be at least 2 characters"],
+      maxlength: [50, "Name cannot exceed 50 characters"],
     },
 
     email: {
       type: String,
-      required: true,
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
       trim: true,
+      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
+      index: true,
     },
 
     password: {
       type: String,
-      required: true,
-      minlength: 6,
+      required: [true, "Password is required"],
+      minlength: [8, "Password must be at least 8 characters"],
+      select: false,
+    },
+
+    refreshToken: {
+      type: String,
+      default: null,
       select: false,
     },
 
@@ -33,14 +42,15 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       default: "",
+      trim: true,
     },
 
     company: {
       type: String,
       default: "",
+      trim: true,
     },
 
-    // 🔥 FIX: added "investor" (from your DB error)
     role: {
       type: String,
       enum: ["user", "admin", "investor"],
@@ -73,18 +83,29 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-//
-// 🔐 HASH PASSWORD
-//
+/* ======================================================
+   🔥 INDEXES (OPTIMIZED)
+====================================================== */
+
+userSchema.index({ createdAt: -1 });
+userSchema.index({ role: 1 });
+userSchema.index({ email: 1 });
+
+/* ======================================================
+   🔐 PASSWORD HASHING (FIXED - NO next ERROR)
+====================================================== */
+
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
 
-  this.password = await bcrypt.hash(this.password, 10);
+  const salt = await bcrypt.genSalt(12);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
-//
-// 🔐 MATCH PASSWORD
-//
+/* ======================================================
+   🔐 PASSWORD MATCH METHOD
+====================================================== */
+
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };

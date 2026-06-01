@@ -42,10 +42,10 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const isAuthenticated = !!token;
+  const isAuthenticated = !!user && !!token;
 
   // ======================================================
-  // ✅ LOGOUT (DEFINE FIRST TO AVOID DEP ISSUES)
+  // ✅ LOGOUT
   // ======================================================
 
   const logout = useCallback(async () => {
@@ -73,10 +73,7 @@ export function AuthProvider({ children }) {
 
       setUser(currentUser);
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify(currentUser)
-      );
+      localStorage.setItem("user", JSON.stringify(currentUser));
     } catch (err) {
       console.error("Load User Error:", err);
       logout();
@@ -84,7 +81,7 @@ export function AuthProvider({ children }) {
   }, [logout]);
 
   // ======================================================
-  // ✅ LOGIN
+  // ✅ LOGIN (FIXED)
   // ======================================================
 
   const login = useCallback(async (formData) => {
@@ -94,17 +91,25 @@ export function AuthProvider({ children }) {
 
       const response = await loginAPI(formData);
 
-      const { user, token } = response.data;
+      const { user, accessToken } = response.data;
+
+      if (!user || !accessToken) {
+        throw new Error("Invalid login response from server");
+      }
 
       setUser(user);
-      setToken(token);
+      setToken(accessToken);
 
       localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("token", token);
+      localStorage.setItem("token", accessToken);
 
       return { success: true, user };
     } catch (err) {
-      const message = err.message || "Login failed";
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        "Login failed";
+
       setError(message);
 
       return { success: false, message };
@@ -129,7 +134,11 @@ export function AuthProvider({ children }) {
         data: response.data,
       };
     } catch (err) {
-      const message = err.message || "Signup failed";
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        "Signup failed";
+
       setError(message);
 
       return { success: false, message };
@@ -201,7 +210,7 @@ export function AuthProvider({ children }) {
 }
 
 // ======================================================
-// ✅ CUSTOM HOOK
+// ✅ HOOK
 // ======================================================
 
 export function useAuthContext() {
