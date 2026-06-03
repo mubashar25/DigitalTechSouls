@@ -6,138 +6,91 @@ import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
 import hpp from "hpp";
 
-// 🔥 ROUTES
+import errorMiddleware from "./middleware/errorMiddleware.js";
+import { apiLimiter } from "./middleware/rateLimitMiddleware.js";
+
+// Routes
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
 import domainRoutes from "./routes/domainRoutes.js";
 import hostingRoutes from "./routes/hostingRoutes.js";
-import orderRoutes from "./routes/orderRoutes.js";
-import cartRoutes from "./routes/cartRoutes.js";
-import paymentRoutes from "./routes/paymentRoutes.js";
-import invoiceRoutes from "./routes/invoiceRoutes.js";
-
-// 🔥 ADMIN ROUTES
-import adminDashboardRoutes from "./routes/admin/adminDashboardRoutes.js";
-import adminUserRoutes from "./routes/admin/adminUserRoutes.js";
-import adminOrderRoutes from "./routes/admin/adminOrderRoutes.js";
-import adminDomainRoutes from "./routes/admin/adminDomainRoutes.js";
-import adminHostingRoutes from "./routes/admin/adminHostingRoutes.js";
-import adminPaymentRoutes from "./routes/admin/adminPaymentRoutes.js";
-import adminInvoiceRoutes from "./routes/admin/adminInvoiceRoutes.js";
-import adminSettingsRoutes from "./routes/admin/adminSettingsRoutes.js";
-import adminAnalyticsRoutes from "./routes/admin/adminAnalyticsRoutes.js";
-
-// 🔥 MIDDLEWARE
-import errorMiddleware from "./middleware/errorMiddleware.js";
-import notFoundMiddleware from "./middleware/notFoundMiddleware.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 const app = express();
 
-/* ======================================================
-   🔒 SECURITY MIDDLEWARE (must be first)
-====================================================== */
-
+// ================================
+// SECURITY MIDDLEWARE
+// ================================
 app.use(helmet());
+app.use(mongoSanitize());
+app.use(hpp());
 
+// ================================
+// CORS
+// ================================
 app.use(
   cors({
     origin: process.env.ALLOWED_ORIGIN || "http://localhost:3000",
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-/* ======================================================
-   🔥 BODY PARSERS (IMPORTANT: BEFORE SANITIZE FIX)
-====================================================== */
-
-app.use(express.json({ limit: "10kb" }));
-app.use(express.urlencoded({ extended: true, limit: "10kb" }));
-
-/* ======================================================
-   🛡️ NO SQL INJECTION PROTECTION (FIXED FOR EXPRESS 5)
-====================================================== */
-
-// ❌ OLD: app.use(mongoSanitize());
-
-// ✅ SAFE FIX (prevents req.query crash)
-app.use(
-  mongoSanitize({
-    replaceWith: "_",
-    allowDots: false,
-    onSanitize: ({ key }) => {
-      console.log(`Sanitized: ${key}`);
-    },
-  })
-);
-
-/* ======================================================
-   ⚠️ HTTP PARAMETER POLLUTION PROTECTION
-====================================================== */
-app.use(hpp());
-
-/* ======================================================
-   🔥 OTHER MIDDLEWARE
-====================================================== */
-
+// ================================
+// BODY & COOKIES
+// ================================
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
-app.use(morgan("dev"));
 
-/* ======================================================
-   🔥 STATIC FOLDERS
-====================================================== */
+// ================================
+// LOGGING
+// ================================
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
-app.use("/uploads", express.static("src/uploads"));
+// ================================
+// GLOBAL RATE LIMIT
+// ================================
+app.use("/api", apiLimiter);
 
-/* ======================================================
-   🔥 HEALTH CHECK
-====================================================== */
+// ================================
+// ROUTES
+// ================================
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/domains", domainRoutes);
+app.use("/api/hosting", hostingRoutes);
+app.use("/api/admin", adminRoutes);
 
-app.get("/", (req, res) => {
+// ================================
+// HEALTH CHECK
+// ================================
+app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "DigitalTechSouls API Running 🚀",
+    message: "DigitalTechSouls API is running",
+    environment: process.env.NODE_ENV,
+    timestamp: new Date().toISOString(),
   });
 });
 
-/* ======================================================
-   🔥 API ROUTES
-====================================================== */
+// ================================
+// 404 HANDLER
+// ================================
+app.use("*", (req, res) => {
+  res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
+});
 
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/domains", domainRoutes);
-app.use("/api/hosting", hostingRoutes);
-app.use("/api/orders", orderRoutes);
-app.use("/api/cart", cartRoutes);
-app.use("/api/payments", paymentRoutes);
-app.use("/api/invoices", invoiceRoutes);
-
-/* ======================================================
-   🔥 ADMIN ROUTES
-====================================================== */
-
-app.use("/api/admin/dashboard", adminDashboardRoutes);
-app.use("/api/admin/users", adminUserRoutes);
-app.use("/api/admin/orders", adminOrderRoutes);
-app.use("/api/admin/domains", adminDomainRoutes);
-app.use("/api/admin/hosting", adminHostingRoutes);
-app.use("/api/admin/payments", adminPaymentRoutes);
-app.use("/api/admin/invoices", adminInvoiceRoutes);
-app.use("/api/admin/settings", adminSettingsRoutes);
-app.use("/api/admin/analytics", adminAnalyticsRoutes);
-
-/* ======================================================
-   ❌ NOT FOUND
-====================================================== */
-
-app.use(notFoundMiddleware);
-
-/* ======================================================
-   🚨 GLOBAL ERROR HANDLER
-====================================================== */
-
+// ================================
+// ERROR HANDLER
+// ================================
 app.use(errorMiddleware);
 
 export default app;

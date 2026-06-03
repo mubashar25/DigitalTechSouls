@@ -1,36 +1,15 @@
-import { useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import Navbar from "./Navbar";
-import Footer from "./Footer";
+import { Outlet } from "react-router-dom";
+import Navbar from "../common/Navbar.js";
+import Footer from "../common/Footer.js";
 
 export default function PublicLayout() {
-  const location = useLocation();
-
-  // 🔥 Smooth scroll to top on route change
-  useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  }, [location.pathname]);
-
   return (
-    <div className="flex flex-col min-h-screen bg-[#0B1220] text-white overflow-x-hidden">
-
-      {/* NAVBAR */}
+    <div className="min-h-screen flex flex-col bg-gray-950">
       <Navbar />
-
-      {/* MAIN CONTENT */}
-      <main className="flex-1 w-full">
-
-        {/* Pages render here */}
+      <main className="flex-1">
         <Outlet />
-
       </main>
-
-      {/* FOOTER */}
       <Footer />
-
     </div>
   );
 }

@@ -2,34 +2,12 @@ import mongoose from "mongoose";
 
 const orderItemSchema = new mongoose.Schema(
   {
-    type: {
-      type: String,
-      enum: ["hosting", "domain"],
-      required: true,
-    },
-
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    price: {
-      type: Number,
-      required: true,
-      min: [0, "Price cannot be negative"],
-    },
-
-    quantity: {
-      type: Number,
-      default: 1,
-      min: 1,
-    },
-
-    billingCycle: {
-      type: String,
-      enum: ["monthly", "yearly", null],
-    },
+    type: { type: String, enum: ["hosting", "domain"], required: true },
+    name: { type: String, required: true, trim: true },
+    price: { type: Number, required: true, min: 0 },
+    quantity: { type: Number, default: 1, min: 1 },
+    billingCycle: { type: String, enum: ["monthly", "yearly", null] },
+    details: { type: mongoose.Schema.Types.Mixed },
   },
   { _id: false }
 );
@@ -42,6 +20,12 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
+    orderNumber: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
     orderItems: {
       type: [orderItemSchema],
       validate: {
@@ -50,23 +34,9 @@ const orderSchema = new mongoose.Schema(
       },
     },
 
-    subtotal: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-
-    tax: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    total: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
+    subtotal: { type: Number, required: true, min: 0 },
+    tax: { type: Number, default: 0, min: 0 },
+    total: { type: Number, required: true, min: 0 },
 
     paymentStatus: {
       type: String,
@@ -80,23 +50,32 @@ const orderSchema = new mongoose.Schema(
       default: "pending",
     },
 
-    invoiceNumber: {
+    paymentMethod: {
       type: String,
-      trim: true,
+      enum: ["stripe", "jazzcash", "easypaisa", "manual"],
+      default: "stripe",
     },
 
-    paidAt: {
-      type: Date,
-    },
+    paymentIntentId: { type: String },
+    invoiceNumber: { type: String, trim: true },
+    paidAt: { type: Date },
+    notes: { type: String },
   },
   { timestamps: true }
 );
 
-// ✅ FIX: indexes for common query patterns
-orderSchema.index({ user: 1, createdAt: -1 }); // "my orders" sorted by newest
+// Auto-generate order number
+orderSchema.pre("save", async function () {
+  if (!this.orderNumber) {
+    const count = await mongoose.model("Order").countDocuments();
+    this.orderNumber = `DTS-${String(count + 1).padStart(6, "0")}`;
+  }
+});
+
+orderSchema.index({ user: 1, createdAt: -1 });
 orderSchema.index({ paymentStatus: 1 });
 orderSchema.index({ orderStatus: 1 });
+orderSchema.index({ orderNumber: 1 });
 
 const Order = mongoose.model("Order", orderSchema);
-
 export default Order;

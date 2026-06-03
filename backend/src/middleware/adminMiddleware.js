@@ -1,23 +1,10 @@
-const adminMiddleware = (
-  req,
-  res,
-  next
-) => {
+const adminMiddleware = (req, res, next) => {
   if (!req.user) {
-    return res.status(401).json({
-      success: false,
-      message: "Unauthorized",
-    });
+    return res.status(401).json({ success: false, message: "Unauthorized" });
   }
-
   if (req.user.role !== "admin") {
-    return res.status(403).json({
-      success: false,
-      message:
-        "Access denied. Admin only.",
-    });
+    return res.status(403).json({ success: false, message: "Access denied. Admins only." });
   }
-
   next();
 };
 

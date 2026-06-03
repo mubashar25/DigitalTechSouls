@@ -1,76 +1,17 @@
 import express from "express";
+import {
+  createStripePaymentController,
+  verifyStripePaymentController,
+  createJazzCashPaymentController,
+} from "../controllers/payments/paymentControllers.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// 🔥 STRIPE
-router.post(
-  "/stripe/create",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "Stripe Payment Intent Created",
-    });
-  }
-);
+router.use(authMiddleware);
 
-router.post(
-  "/stripe/verify",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "Stripe Payment Verified",
-    });
-  }
-);
-
-// 🔥 PAYPAL
-router.post(
-  "/paypal/create",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "PayPal Payment Created",
-    });
-  }
-);
-
-// 🔥 JAZZCASH
-router.post(
-  "/jazzcash/create",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "JazzCash Payment Created",
-    });
-  }
-);
-
-// 🔥 EASYPAISA
-router.post(
-  "/easypaisa/create",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "EasyPaisa Payment Created",
-    });
-  }
-);
-
-// 🔥 REFUND
-router.post(
-  "/refund/:id",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "Payment Refunded",
-    });
-  }
-);
+router.post("/stripe/create", createStripePaymentController);
+router.post("/stripe/verify", verifyStripePaymentController);
+router.post("/jazzcash/create", createJazzCashPaymentController);
 
 export default router;

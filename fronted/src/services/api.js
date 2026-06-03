@@ -1,122 +1,55 @@
 import axios from "axios";
 
-// 🌍 BASE URL
-const BASE_URL =
-  process.env.REACT_APP_API_URL ||
-  "http://localhost:5000/api";
-
-// 🔥 AXIOS INSTANCE
 const api = axios.create({
-  baseURL: BASE_URL,
-
-  timeout: 15000,
-
-  withCredentials: true,
-
-  headers: {
-    "Content-Type":
-      "application/json",
-  },
+  baseURL: import.meta.env.VITE_API_URL || "/api",
+  withCredentials: true, // send httpOnly cookies
+  headers: { "Content-Type": "application/json" },
 });
 
-// =========================================
-// 🔐 REQUEST INTERCEPTOR
-// =========================================
-api.interceptors.request.use(
-  (config) => {
-    try {
-      const token =
-        localStorage.getItem(
-          "token"
-        );
+// Track refresh attempts to avoid loops
+let isRefreshing = false;
+let failedQueue = [];
 
-      // 🔥 ATTACH TOKEN
-      if (token) {
-        config.headers.Authorization =
-          `Bearer ${token}`;
-      }
-    } catch (error) {
-      console.error(
-        "Token Read Error:",
-        error
-      );
-    }
+const processQueue = (error) => {
+  failedQueue.forEach((prom) => (error ? prom.reject(error) : prom.resolve()));
+  failedQueue = [];
+};
 
-    return config;
-  },
-
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// =========================================
-// ⚠️ RESPONSE INTERCEPTOR
-// =========================================
+// Response interceptor - handle token refresh
 api.interceptors.response.use(
-  // ✅ SUCCESS
   (response) => response,
-
-  // ❌ ERROR
   async (error) => {
-    const status =
-      error.response?.status;
+    const original = error.config;
 
-    const message =
-      error.response?.data
-        ?.message ||
-      error.message ||
-      "Something went wrong";
+    if (error.response?.status === 401 && !original._retry) {
+      if (error.response?.data?.code === "TOKEN_EXPIRED") {
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          }).then(() => api(original));
+        }
 
-    console.error(
-      "API Error:",
-      message
-    );
+        original._retry = true;
+        isRefreshing = true;
 
-    // =========================================
-    // 🔒 AUTO LOGOUT ON 401
-    // =========================================
-    if (status === 401) {
-      try {
-        // 🧹 CLEAR STORAGE
-        localStorage.removeItem(
-          "token"
-        );
-
-        localStorage.removeItem(
-          "user"
-        );
-
-        localStorage.removeItem(
-          "cart"
-        );
-
-        // 🔥 REDIRECT
-        window.location.href =
-          "/login";
-      } catch (cleanupError) {
-        console.error(
-          "Logout Cleanup Error:",
-          cleanupError
-        );
+        try {
+          await api.post("/auth/refresh-token");
+          processQueue(null);
+          return api(original);
+        } catch (refreshError) {
+          processQueue(refreshError);
+          // Only redirect to login if refresh truly fails
+          if (typeof window !== "undefined") {
+            window.location.href = "/login";
+          }
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
       }
     }
 
-    // =========================================
-    // 🔥 RETURN CLEAN ERROR
-    // =========================================
-    return Promise.reject({
-      success: false,
-
-      status,
-
-      message,
-
-      data:
-        error.response?.data,
-
-      originalError: error,
-    });
+    return Promise.reject(error);
   }
 );
 

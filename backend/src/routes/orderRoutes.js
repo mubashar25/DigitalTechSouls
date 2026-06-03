@@ -1,53 +1,19 @@
 import express from "express";
+import {
+  createOrderController,
+  getMyOrdersController,
+  getSingleOrderController,
+  cancelOrderController,
+} from "../controllers/orders/orderControllers.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// 🔥 CREATE ORDER
-router.post(
-  "/create",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "Order Created Successfully",
-    });
-  }
-);
+router.use(authMiddleware);
 
-// 🔥 MY ORDERS
-router.get(
-  "/my-orders",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "User Orders",
-    });
-  }
-);
-
-// 🔥 SINGLE ORDER
-router.get(
-  "/:id",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "Single Order",
-    });
-  }
-);
-
-// 🔥 CANCEL ORDER
-router.put(
-  "/cancel/:id",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "Order Cancelled",
-    });
-  }
-);
+router.post("/", createOrderController);
+router.get("/", getMyOrdersController);
+router.get("/:id", getSingleOrderController);
+router.put("/cancel/:id", cancelOrderController);
 
 export default router;

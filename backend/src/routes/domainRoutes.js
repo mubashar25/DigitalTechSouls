@@ -1,53 +1,22 @@
 import express from "express";
+import {
+  checkDomainController,
+  getMyDomainsController,
+  registerDomainController,
+  transferDomainController,
+} from "../controllers/domain/domainControllers.js";
+import authMiddleware from "../middleware/authMiddleware.js";
+import { domainCheckLimiter } from "../middleware/rateLimitMiddleware.js";
 
 const router = express.Router();
 
-// 🔥 CHECK DOMAIN
-router.get(
-  "/check",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "Domain Check API",
-    });
-  }
-);
+// Public
+router.get("/check", domainCheckLimiter, checkDomainController);
 
-// 🔥 REGISTER DOMAIN
-router.post(
-  "/register",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "Register Domain",
-    });
-  }
-);
-
-// 🔥 TRANSFER DOMAIN
-router.post(
-  "/transfer",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "Transfer Domain",
-    });
-  }
-);
-
-// 🔥 WHOIS
-router.get(
-  "/whois/:domain",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "WHOIS Lookup",
-    });
-  }
-);
+// Protected
+router.use(authMiddleware);
+router.get("/my-domains", getMyDomainsController);
+router.post("/register", registerDomainController);
+router.post("/transfer", transferDomainController);
 
 export default router;

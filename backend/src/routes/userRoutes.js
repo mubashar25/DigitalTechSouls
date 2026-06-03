@@ -1,43 +1,23 @@
 import express from "express";
-
+import {
+  getProfileController,
+  updateProfileController,
+  changePasswordController,
+  updateSettingsController,
+  uploadAvatarController,
+  deleteAccountController,
+} from "../controllers/users/userControllers.js";
 import authMiddleware from "../middleware/authMiddleware.js";
-
-import getProfileController from "../controllers/users/getProfileController.js";
-
-import updateProfileController from "../controllers/users/updateProfileController.js";
-
-import changePasswordController from "../controllers/users/changePasswordController.js";
-
-import deleteAccountController from "../controllers/users/deleteAccountController.js";
 
 const router = express.Router();
 
-// 👤 PROFILE
-router.get(
-  "/profile",
-  authMiddleware,
-  getProfileController
-);
+router.use(authMiddleware);
 
-// ✏️ UPDATE PROFILE
-router.put(
-  "/profile",
-  authMiddleware,
-  updateProfileController
-);
-
-// 🔐 CHANGE PASSWORD
-router.put(
-  "/change-password",
-  authMiddleware,
-  changePasswordController
-);
-
-// ❌ DELETE ACCOUNT
-router.delete(
-  "/delete",
-  authMiddleware,
-  deleteAccountController
-);
+router.get("/profile", getProfileController);
+router.put("/profile", updateProfileController);
+router.put("/change-password", changePasswordController);
+router.put("/settings", updateSettingsController);
+router.put("/avatar", uploadAvatarController);
+router.delete("/delete-account", deleteAccountController);
 
 export default router;

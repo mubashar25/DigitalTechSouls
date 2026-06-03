@@ -1,231 +1,121 @@
 import { useState } from "react";
-import {
-  Link,
-  NavLink,
-  useNavigate,
-} from "react-router-dom";
-
-import useCart from "../../hooks/useCart";
-import useAuth from "../../hooks/useAuth";
-
-import logo from "../../assets/WhatsApp Image 2026-05-22 at 10.47.29 PM.jpeg";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { FiMenu, FiX, FiShoppingCart, FiUser, FiLogOut, FiGrid } from "react-icons/fi";
+import useAuthStore from "../../store/authStore.js";
+import useCartStore from "../../store/cartStore.js";
 
 export default function Navbar() {
+  const [isOpen, setIsOpen] = useState(false);
+  const { user, logout } = useAuthStore();
+  const { items } = useCartStore();
   const navigate = useNavigate();
-
-  const [menuOpen, setMenuOpen] =
-    useState(false);
-
-  const { cartCount } = useCart();
-
-  const {
-    isAuthenticated,
-    user,
-    userName,
-    isAdmin,
-    logout,
-  } = useAuth();
+  const location = useLocation();
 
   const navLinks = [
-    { name: "Hosting", path: "/hosting" },
-    { name: "Domain", path: "/domain" },
-    { name: "Web Dev", path: "/webdev" },
-    { name: "Pricing", path: "/pricing" },
+    { to: "/hosting", label: "Hosting" },
+    { to: "/domains", label: "Domains" },
   ];
 
   const handleLogout = async () => {
-    try {
-      await logout();
-      navigate("/login");
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
+    await logout();
+    navigate("/login");
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#0B1220]/80 backdrop-blur-xl">
+    <nav className="sticky top-0 z-50 bg-gray-950/95 backdrop-blur-md border-b border-gray-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">DT</span>
+            </div>
+            <span className="font-bold text-white text-lg">DigitalTechSouls</span>
+          </Link>
 
-      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-
-        <div className="flex items-center justify-between h-20">
-
-          {/* LOGO */}
-<Link
-  to="/"
-  className="flex items-center gap-3 group"
->
-
-  {/* IMAGE */}
-  <img
-    src={logo}
-    alt="Digital Tech Souls"
-    className="h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-  />
-
-  
-
-</Link>
-
-          {/* NAV */}
-          <nav className="hidden md:flex items-center gap-8">
-
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
-              <NavLink
-                key={link.name}
-                to={link.path}
-                className={({ isActive }) =>
-                  `
-                    relative text-sm font-medium transition-all duration-300
-                    ${
-                      isActive
-                        ? "text-white"
-                        : "text-gray-400 hover:text-white"
-                    }
-                  `
-                }
+              <Link
+                key={link.to}
+                to={link.to}
+                className={`text-sm font-medium transition-colors ${
+                  location.pathname === link.to ? "text-blue-400" : "text-gray-300 hover:text-white"
+                }`}
               >
-                {link.name}
-              </NavLink>
+                {link.label}
+              </Link>
             ))}
+          </div>
 
-          </nav>
+          {/* Right Side */}
+          <div className="hidden md:flex items-center gap-3">
+            {user ? (
+              <>
+                {/* Cart */}
+                <Link to="/checkout" className="relative p-2 text-gray-400 hover:text-white transition-colors">
+                  <FiShoppingCart size={20} />
+                  {items.length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center">
+                      {items.length}
+                    </span>
+                  )}
+                </Link>
 
-          {/* RIGHT */}
-          <div className="hidden md:flex items-center gap-5">
-
-            {/* CART */}
-            <Link
-              to="/cart"
-              className="relative text-gray-300 hover:text-white transition"
-            >
-              🛒
-
-              {cartCount > 0 && (
-                <span className="absolute -top-2 -right-3 bg-indigo-600 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center shadow-md">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-
-            {isAuthenticated ? (
-              <div className="flex items-center gap-4">
-
-                <div className="flex flex-col leading-tight">
-                  <span className="text-sm font-semibold text-white">
-                    {userName}
-                  </span>
-
-                  <span className="text-xs text-gray-400">
-                    {user?.email}
-                  </span>
-                </div>
-
-                <Link
-                  to={
-                    isAdmin
-                      ? "/admin/dashboard"
-                      : "/dashboard"
-                  }
-                  className="text-sm font-medium text-gray-300 hover:text-white transition"
-                >
+                {/* Dashboard */}
+                <Link to="/dashboard" className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors">
+                  <FiGrid size={16} />
                   Dashboard
                 </Link>
 
-                <button
-                  onClick={handleLogout}
-                  className="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-xl transition shadow-md"
-                >
-                  Logout
+                {/* Admin */}
+                {user.role === "admin" && (
+                  <Link to="/admin" className="text-sm text-yellow-400 hover:text-yellow-300 font-medium transition-colors">
+                    Admin
+                  </Link>
+                )}
+
+                {/* Logout */}
+                <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition-colors">
+                  <FiLogOut size={16} />
                 </button>
-
-              </div>
+              </>
             ) : (
-              <div className="flex items-center gap-4">
-
-                <Link
-                  to="/login"
-                  className="text-sm text-gray-300 hover:text-white transition"
-                >
-                  Login
-                </Link>
-
-                <Link
-                  to="/signup"
-                  className="bg-gradient-to-r from-indigo-600 to-cyan-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg hover:shadow-cyan-500/20 hover:opacity-95 transition-all duration-300"
-                >
-                  Get Started
-                </Link>
-
-              </div>
+              <>
+                <Link to="/login" className="text-sm text-gray-300 hover:text-white transition-colors font-medium">Login</Link>
+                <Link to="/register" className="btn-primary text-sm py-2 px-4">Get Started</Link>
+              </>
             )}
-
           </div>
 
-          {/* MOBILE BTN */}
-          <button
-            onClick={() =>
-              setMenuOpen(!menuOpen)
-            }
-            className="md:hidden text-2xl text-white"
-          >
-            {menuOpen ? "✕" : "☰"}
+          {/* Mobile menu button */}
+          <button onClick={() => setIsOpen(!isOpen)} className="md:hidden text-gray-400 hover:text-white p-2">
+            {isOpen ? <FiX size={22} /> : <FiMenu size={22} />}
           </button>
-
         </div>
 
-        {/* MOBILE MENU */}
-        {menuOpen && (
-          <div className="md:hidden border-t border-white/10 py-5 animate-fadeIn">
-
-            <div className="flex flex-col gap-5">
-
-              {navLinks.map((link) => (
-                <NavLink
-                  key={link.name}
-                  to={link.path}
-                  onClick={() =>
-                    setMenuOpen(false)
-                  }
-                  className={({ isActive }) =>
-                    `
-                      text-sm font-medium transition
-                      ${
-                        isActive
-                          ? "text-white"
-                          : "text-gray-400 hover:text-white"
-                      }
-                    `
-                  }
-                >
-                  {link.name}
-                </NavLink>
-              ))}
-
-              <div className="pt-4 border-t border-white/10 flex flex-col gap-4">
-
-                <Link
-                  to="/login"
-                  className="text-sm text-gray-300 hover:text-white transition"
-                >
-                  Login
-                </Link>
-
-                <Link
-                  to="/signup"
-                  className="bg-gradient-to-r from-indigo-600 to-cyan-500 text-white px-5 py-3 rounded-xl text-sm font-semibold text-center shadow-lg"
-                >
-                  Get Started
-                </Link>
-
-              </div>
-
-            </div>
-
+        {/* Mobile Menu */}
+        {isOpen && (
+          <div className="md:hidden border-t border-gray-800 py-4 space-y-2">
+            {navLinks.map((link) => (
+              <Link key={link.to} to={link.to} onClick={() => setIsOpen(false)} className="block py-2 text-gray-300 hover:text-white text-sm font-medium">
+                {link.label}
+              </Link>
+            ))}
+            {user ? (
+              <>
+                <Link to="/dashboard" onClick={() => setIsOpen(false)} className="block py-2 text-gray-300 hover:text-white text-sm">Dashboard</Link>
+                <button onClick={handleLogout} className="block py-2 text-red-400 text-sm text-left w-full">Logout</button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setIsOpen(false)} className="block py-2 text-gray-300 text-sm">Login</Link>
+                <Link to="/register" onClick={() => setIsOpen(false)} className="block py-2 text-blue-400 text-sm font-semibold">Get Started</Link>
+              </>
+            )}
           </div>
         )}
-
       </div>
-
-    </header>
+    </nav>
   );
 }

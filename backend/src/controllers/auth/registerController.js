@@ -1,75 +1,62 @@
 import User from "../../models/User.js";
 import asyncHandler from "../../utils/asyncHandler.js";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-} from "../../utils/generateToken.js";
-import {
-  successResponse,
-  errorResponse,
-} from "../../utils/formatResponse.js";
+import { generateAccessToken, generateRefreshToken, setTokenCookies } from "../../utils/generateToken.js";
+import { sendVerificationEmail } from "../../services/emailService.js";
+import crypto from "crypto";
 
 const registerController = asyncHandler(async (req, res) => {
-
-  // 🔥 FIX: match frontend + backend properly
   const { name, email, password } = req.body;
 
-  // 🔥 VALIDATION
   if (!name || !email || !password) {
-    return errorResponse(res, "All fields are required", 400);
+    return res.status(400).json({ success: false, message: "All fields are required" });
   }
 
-  // 🔥 CHECK EXISTING USER
-  const existingUser = await User.findOne({ email });
+  if (password.length < 8) {
+    return res.status(400).json({ success: false, message: "Password must be at least 8 characters" });
+  }
 
+  const existingUser = await User.findOne({ email: email.toLowerCase() });
   if (existingUser) {
-    return errorResponse(res, "User already exists", 400);
+    return res.status(400).json({ success: false, message: "Email already registered" });
   }
 
-  // 🔥 CREATE USER (FIXED)
-  const user = await User.create({
-    fullName: name,   // ✅ mapping correct
-    email,
-    password,
-  });
+  const user = await User.create({ fullName: name, email, password });
 
-  // 🔥 TOKENS
+  // Email verification token
+  const verifyToken = user.getEmailVerificationToken();
+  await user.save({ validateBeforeSave: false });
+
+  // Send verification email (don't block registration if email fails)
+  try {
+    await sendVerificationEmail(user, verifyToken);
+  } catch (err) {
+    console.error("Verification email failed:", err.message);
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpiry = undefined;
+    await user.save({ validateBeforeSave: false });
+  }
+
   const accessToken = generateAccessToken(user._id);
   const refreshToken = generateRefreshToken(user._id);
 
-  // 🔥 SAVE REFRESH TOKEN
-  user.refreshToken = refreshToken;
-  await user.save();
+  // Store hashed refresh token
+  user.refreshToken = crypto.createHash("sha256").update(refreshToken).digest("hex");
+  user.lastLogin = new Date();
+  await user.save({ validateBeforeSave: false });
 
-  // 🔥 COOKIES
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: false,
-    sameSite: "strict",
-    maxAge: 15 * 60 * 1000,
-  });
+  setTokenCookies(res, accessToken, refreshToken);
 
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: false,
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  // 🔥 RESPONSE
-  successResponse(
-    res,
-    "Registration successful",
-    {
-      user: {
-        id: user._id,
-        name: user.fullName,  // ✅ FIXED
-        email: user.email,
-        role: user.role,
-      },
+  return res.status(201).json({
+    success: true,
+    message: "Registration successful. Please verify your email.",
+    user: {
+      id: user._id,
+      name: user.fullName,
+      email: user.email,
+      role: user.role,
+      isVerified: user.isVerified,
     },
-    201
-  );
+  });
 });
 
 export default registerController;

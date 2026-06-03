@@ -1,29 +1,19 @@
 import express from "express";
+import {
+  getHostingPlansController,
+  getMyHostingController,
+  createHostingController,
+} from "../controllers/hosting/hostingControllers.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// 🔥 PUBLIC ROUTES
-router.get(
-  "/plans",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "Get Hosting Plans",
-    });
-  }
-);
+// Public
+router.get("/plans", getHostingPlansController);
 
-// 🔥 USER HOSTING
-router.get(
-  "/my-hosting",
-  (req, res) => {
-    res.json({
-      success: true,
-      message:
-        "My Hosting",
-    });
-  }
-);
+// Protected
+router.use(authMiddleware);
+router.get("/my-hosting", getMyHostingController);
+router.post("/create", createHostingController);
 
 export default router;

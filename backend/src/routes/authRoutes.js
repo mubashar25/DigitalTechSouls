@@ -1,82 +1,26 @@
 import express from "express";
-
-// 🔥 CONTROLLERS
 import registerController from "../controllers/auth/registerController.js";
-
 import loginController from "../controllers/auth/loginController.js";
-
-import logoutController from "../controllers/auth/logoutController.js";
-
-import meController from "../controllers/auth/meController.js";
-
-import forgotPasswordController from "../controllers/auth/forgotPasswordController.js";
-
-
-
-import refreshTokenController from "../controllers/auth/refreshTokenController.js";
-
-
-
-// 🔥 MIDDLEWARE
+import {
+  logoutController,
+  meController,
+  refreshTokenController,
+  verifyEmailController,
+  forgotPasswordController,
+  resetPasswordController,
+} from "../controllers/auth/authControllers.js";
 import authMiddleware from "../middleware/authMiddleware.js";
+import { authLimiter } from "../middleware/rateLimitMiddleware.js";
 
 const router = express.Router();
 
-// ==========================================
-// 🔐 AUTH ROUTES
-// ==========================================
-
-// ✅ REGISTER
-router.post(
-  "/register",
-  registerController
-);
-
-// ✅ LOGIN
-router.post(
-  "/login",
-  loginController
-);
-
-// ✅ LOGOUT
-router.post(
-  "/logout",
-  logoutController
-);
-
-// ✅ CURRENT USER
-router.get(
-  "/me",
-  authMiddleware,
-  meController
-);
-
-// ==========================================
-// 🔑 PASSWORD ROUTES
-// ==========================================
-
-// ✅ FORGOT PASSWORD
-router.post(
-  "/forgot-password",
-  forgotPasswordController
-);
-
-
-
-// ==========================================
-// 🔄 TOKEN ROUTES
-// ==========================================
-
-// ✅ REFRESH TOKEN
-router.post(
-  "/refresh-token",
-  refreshTokenController
-);
-
-// ==========================================
-// 📧 EMAIL VERIFICATION
-// ==========================================
-
-
+router.post("/register", authLimiter, registerController);
+router.post("/login", authLimiter, loginController);
+router.post("/logout", logoutController);
+router.post("/refresh-token", refreshTokenController);
+router.get("/me", authMiddleware, meController);
+router.get("/verify-email", verifyEmailController);
+router.post("/forgot-password", authLimiter, forgotPasswordController);
+router.post("/reset-password", resetPasswordController);
 
 export default router;

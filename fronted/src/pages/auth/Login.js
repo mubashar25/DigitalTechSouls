@@ -1,297 +1,95 @@
-import {
-  useState,
-  useEffect,
-} from "react";
+import { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
+import useAuthStore from "../../store/authStore.js";
+import useCartStore from "../../store/cartStore.js";
+import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 
-import {
-  useNavigate,
-  Link,
-} from "react-router-dom";
+export default function LoginPage() {
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [showPass, setShowPass] = useState(false);
+  const { login, isLoading } = useAuthStore();
+  const { fetchCart } = useCartStore();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/dashboard";
 
-import useAuth
-  from "../../hooks/useAuth";
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.email || !form.password) return toast.error("Please fill all fields");
 
-import Button
-  from "../../components/ui/Button";
-
-import Container
-  from "../../components/common/Container";
-
-export default function Login() {
-
-  // 🔐 AUTH
-  const {
-    login,
-    isAuthenticated,
-    loading,
-  } = useAuth();
-
-  const navigate =
-    useNavigate();
-
-  // ======================================================
-  // ✅ FORM STATE
-  // ======================================================
-
-  const [form, setForm] =
-    useState({
-      email: "",
-      password: "",
-    });
-
-  const [error, setError] =
-    useState("");
-
-  // ======================================================
-  // ✅ REDIRECT IF LOGGED IN
-  // ======================================================
-
-  useEffect(() => {
-
-    if (isAuthenticated) {
-
-      navigate("/dashboard");
+    const result = await login(form.email, form.password);
+    if (result.success) {
+      await fetchCart();
+      toast.success("Welcome back!");
+      navigate(result.user.role === "admin" ? "/admin" : from, { replace: true });
+    } else {
+      toast.error(result.message);
     }
-
-  }, [
-    isAuthenticated,
-    navigate,
-  ]);
-
-  // ======================================================
-  // ✅ HANDLE CHANGE
-  // ======================================================
-
-  const handleChange = (e) => {
-
-    setForm((prev) => ({
-      ...prev,
-      [e.target.name]:
-        e.target.value,
-    }));
   };
 
-  // ======================================================
-  // ✅ HANDLE LOGIN
-  // ======================================================
-
-  const handleSubmit =
-    async (e) => {
-
-      e.preventDefault();
-
-      setError("");
-
-      const result =
-        await login(form);
-
-      // ❌ ERROR
-      if (!result.success) {
-
-        setError(
-          result.message
-        );
-
-        return;
-      }
-
-      // ✅ SUCCESS
-      navigate("/dashboard");
-    };
-
-  // ======================================================
-  // ✅ UI
-  // ======================================================
-
   return (
-    <section
-      className="
-      min-h-screen
-      bg-gray-50
-      flex
-      items-center
-      py-16
-    "
-    >
-      <Container>
-
-        <div
-          className="
-          max-w-md
-          mx-auto
-          bg-white
-          border
-          rounded-xl
-          shadow-sm
-          p-8
-        "
-        >
-
-          {/* TITLE */}
-          <div className="mb-6 text-center">
-
-            <h1
-              className="
-              text-3xl
-              font-bold
-              text-gray-900
-            "
-            >
-              Welcome Back
-            </h1>
-
-            <p
-              className="
-              text-gray-500
-              mt-2
-            "
-            >
-              Login to manage your hosting & domains
-            </p>
-
-          </div>
-
-          {/* FORM */}
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-5"
-          >
-
-            {/* EMAIL */}
-            <div>
-
-              <label
-                className="
-                block
-                text-sm
-                font-medium
-                mb-2
-              "
-              >
-                Email Address
-              </label>
-
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                placeholder="Enter email"
-                required
-                className="
-w-full
-border
-rounded-lg
-px-4
-py-3
-text-gray-900
-bg-white
-placeholder-gray-400
-focus:outline-none
-focus:ring-2
-focus:ring-black
-"
-              />
-
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-flex items-center gap-2 mb-6">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+              <span className="text-white font-bold">DT</span>
             </div>
-
-            {/* PASSWORD */}
-            <div>
-
-              <label
-                className="
-                block
-                text-sm
-                font-medium
-                mb-2
-              "
-              >
-                Password
-              </label>
-
-              <input
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                placeholder="Enter password"
-                required
-                className="
-w-full
-border
-rounded-lg
-px-4
-py-3
-text-gray-900
-bg-white
-placeholder-gray-400
-focus:outline-none
-focus:ring-2
-focus:ring-black
-"
-              />
-
-            </div>
-
-            {/* ERROR */}
-            {error && (
-              <div
-                className="
-                bg-red-50
-                border
-                border-red-200
-                text-red-600
-                text-sm
-                rounded-lg
-                px-4
-                py-3
-              "
-              >
-                {error}
-              </div>
-            )}
-
-            {/* LOGIN BUTTON */}
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full"
-            >
-              {loading
-                ? "Logging in..."
-                : "Login"}
-            </Button>
-
-          </form>
-
-          {/* FOOTER */}
-          <div
-            className="
-            mt-6
-            text-center
-            text-sm
-            text-gray-500
-          "
-          >
-
-            Don’t have an account?{" "}
-
-            <Link
-              to="/signup"
-              className="
-              text-black
-              font-semibold
-              hover:underline
-            "
-            >
-              Create Account
-            </Link>
-
-          </div>
-
+          </Link>
+          <h1 className="text-2xl font-bold text-white">Welcome back</h1>
+          <p className="text-gray-400 mt-1 text-sm">Sign in to your account</p>
         </div>
 
-      </Container>
-    </section>
+        <div className="card">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
+              <div className="relative">
+                <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="input-field pl-10"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-medium text-gray-300">Password</label>
+                <Link to="/forgot-password" className="text-xs text-blue-400 hover:text-blue-300">Forgot password?</Link>
+              </div>
+              <div className="relative">
+                <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                <input
+                  type={showPass ? "text" : "password"}
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  className="input-field pl-10 pr-10"
+                  placeholder="••••••••"
+                  required
+                />
+                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300">
+                  {showPass ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" disabled={isLoading} className="btn-primary w-full mt-2">
+              {isLoading ? "Signing in..." : "Sign In"}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-gray-400 mt-6">
+            Don't have an account?{" "}
+            <Link to="/register" className="text-blue-400 hover:text-blue-300 font-medium">Create one</Link>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
